@@ -38,10 +38,13 @@ private:
     juce::TextButton pauseButton{ "||" };
     juce::TextButton startButton{ "|<" };
     juce::TextButton endButton{ ">|" };
+    juce::TextButton muteButton{ "Mute" };
     juce::Slider volumeSlider;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
+    bool isMuted = false;
+    float previousVolume = 0.5f;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };
-
