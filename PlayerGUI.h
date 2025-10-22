@@ -1,4 +1,12 @@
-﻿
+﻿/*
+  ==============================================================================
+
+    PlayerGUI.h
+    Created: 21 Oct 2025 4:34:07pm
+    Author:  USER
+
+  ==============================================================================
+*/
 #pragma once
 #include <JuceHeader.h>
 #include "PlayerAudio.h"
@@ -11,6 +19,7 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    
 
 private:
     PlayerAudio& audioPlayer;
@@ -21,10 +30,11 @@ private:
     juce::TextButton restartButton{ "Restart" };
     juce::TextButton startButton{ "|<" };
     juce::TextButton endButton{ ">|" };
-    juce::TextButton muteButton{ "Mute" }; // 🔹 زرار الميوت
+    juce::ToggleButton loopButton{ "Loop" };
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
     void setupButtons();
 };
+
 

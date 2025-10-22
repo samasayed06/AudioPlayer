@@ -1,26 +1,23 @@
-﻿
-
-
-#include "MainComponent.h"
+﻿#include "MainComponent.h"
 
 MainComponent::MainComponent()
 {
     formatManager.registerBasicFormats();
 
-    // Add buttons (Load, Restart, Play, Pause, Start, End, Mute)
-    for (auto* btn : { &loadButton, &restartButton, &playButton, &pauseButton, &startButton, &endButton, &muteButton })
+    // Add buttons
+    for (auto* btn : { &loadButton, &restartButton , & stopButton})
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
     }
 
-    // Volume slider setup
+    // Volume slider
     volumeSlider.setRange(0.0, 1.0, 0.01);
     volumeSlider.setValue(0.5);
     volumeSlider.addListener(this);
     addAndMakeVisible(volumeSlider);
 
-    setSize(700, 250);
+    setSize(500, 250);
     setAudioChannels(0, 2);
 }
 
@@ -52,17 +49,11 @@ void MainComponent::paint(juce::Graphics& g)
 void MainComponent::resized()
 {
     int y = 20;
-    int w = 70;
-    int h = 40;
-    int x = 20;
-
-    loadButton.setBounds(x, y, w, h); x += 80;
-    restartButton.setBounds(x, y, w, h); x += 80;
-    playButton.setBounds(x, y, w, h); x += 80;
-    pauseButton.setBounds(x, y, w, h); x += 80;
-    startButton.setBounds(x, y, w, h); x += 80;
-    endButton.setBounds(x, y, w, h); x += 80;
-    muteButton.setBounds(x, y, w, h); // زرار الميوت
+    loadButton.setBounds(20, y, 100, 40);
+    restartButton.setBounds(140, y, 80, 40);
+    stopButton.setBounds(240, y, 80, 40);
+    /*prevButton.setBounds(340, y, 80, 40);
+    nextButton.setBounds(440, y, 80, 40);*/
 
     volumeSlider.setBounds(20, 100, getWidth() - 40, 30);
 }
@@ -71,8 +62,14 @@ void MainComponent::buttonClicked(juce::Button* button)
 {
     if (button == &loadButton)
     {
+        juce::FileChooser chooser("Select audio files...",
+            juce::File{},
+            "*.wav;*.mp3");
+
         fileChooser = std::make_unique<juce::FileChooser>(
-            "Select an audio file...", juce::File{}, "*.wav;*.mp3");
+            "Select an audio file...",
+            juce::File{},
+            "*.wav;*.mp3");
 
         fileChooser->launchAsync(
             juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
@@ -83,12 +80,20 @@ void MainComponent::buttonClicked(juce::Button* button)
                 {
                     if (auto* reader = formatManager.createReaderFor(file))
                     {
+                        // 🔑 Disconnect old source first
                         transportSource.stop();
                         transportSource.setSource(nullptr);
                         readerSource.reset();
 
+                        // Create new reader source
                         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
-                        transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+
+                        // Attach safely
+                        transportSource.setSource(readerSource.get(),
+                            0,
+                            nullptr,
+                            reader->sampleRate);
+                        transportSource.start();
                     }
                 }
             });
@@ -96,54 +101,20 @@ void MainComponent::buttonClicked(juce::Button* button)
 
     if (button == &restartButton)
     {
-        transportSource.setPosition(0.0);
         transportSource.start();
     }
 
-    if (button == &playButton)
-    {
-        transportSource.start();
-    }
-
-    if (button == &pauseButton)
+    if (button == &stopButton)
     {
         transportSource.stop();
-    }
-
-    if (button == &startButton)
-    {
         transportSource.setPosition(0.0);
     }
 
-    if (button == &endButton)
-    {
-        transportSource.setPosition(transportSource.getLengthInSeconds());
-    }
-
-   
-    if (button == &muteButton)
-    {
-        if (!isMuted)
-        {
-            previousVolume = (float)volumeSlider.getValue();
-            transportSource.setGain(0.0f);
-            isMuted = true;
-            muteButton.setButtonText("Unmute");
-        }
-        else
-        {
-            transportSource.setGain(previousVolume);
-            isMuted = false;
-            muteButton.setButtonText("Mute");
-        }
-    }
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &volumeSlider)
-    {
-        if (!isMuted)
-            transportSource.setGain((float)slider->getValue());
-    }
+        transportSource.setGain((float)slider->getValue());
 }
+

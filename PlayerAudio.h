@@ -1,4 +1,12 @@
+/*
+  ==============================================================================
 
+    PlayerAudio.h
+    Created: 21 Oct 2025 4:33:49pm
+    Author:  USER
+
+  ==============================================================================
+*/
 
 #pragma once
 #include <JuceHeader.h>
@@ -20,21 +28,15 @@ public:
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
     void releaseResources();
-
-   
-    void mute();
-    void unmute();
-    bool isMuted() const { return muted; }
-
+    void setLooping(bool shouldLoop);
+    juce::AudioTransportSource* getTransportSource() { return &transportSource; }
 private:
     juce::AudioFormatManager formatManager;
     juce::AudioTransportSource transportSource;
+    
+
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
-
-    bool muted = false;
-    float previousGain = 0.5f;
 };
-
 
 
 

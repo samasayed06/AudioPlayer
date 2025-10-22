@@ -1,4 +1,14 @@
-﻿
+﻿/*
+  ==============================================================================
+
+    PlayerGUI.cpp
+    Created: 21 Oct 2025 4:33:31pm
+    Author:  USER
+
+  ==============================================================================
+*/
+
+
 #include "PlayerGUI.h"
 
 PlayerGUI::PlayerGUI(PlayerAudio& player) : audioPlayer(player)
@@ -14,7 +24,11 @@ void PlayerGUI::setupButtons()
     addAndMakeVisible(restartButton);
     addAndMakeVisible(startButton);
     addAndMakeVisible(endButton);
-    addAndMakeVisible(muteButton);
+    addAndMakeVisible(loopButton);
+    loopButton.onClick = [this]()
+        {
+            audioPlayer.setLooping(loopButton.getToggleState());
+        };
 
     loadButton.onClick = [this]()
         {
@@ -31,6 +45,10 @@ void PlayerGUI::setupButtons()
                 });
 
             fileChooser = std::move(chooser);
+
+            
+
+            
         };
 
     playButton.onClick = [this]() { audioPlayer.play(); };
@@ -38,21 +56,6 @@ void PlayerGUI::setupButtons()
     restartButton.onClick = [this]() { audioPlayer.restart(); };
     startButton.onClick = [this]() { audioPlayer.start(); };
     endButton.onClick = [this]() { audioPlayer.end(); };
-
-    // 🔹 ميوت / أنميوت
-    muteButton.onClick = [this]()
-        {
-            if (!audioPlayer.isMuted())
-            {
-                audioPlayer.mute();
-                muteButton.setButtonText("Unmute");
-            }
-            else
-            {
-                audioPlayer.unmute();
-                muteButton.setButtonText("Mute");
-            }
-        };
 }
 
 void PlayerGUI::paint(juce::Graphics& g)
@@ -63,7 +66,7 @@ void PlayerGUI::paint(juce::Graphics& g)
 void PlayerGUI::resized()
 {
     auto area = getLocalBounds().reduced(10);
-    auto buttonWidth = area.getWidth() / 8;
+    auto buttonWidth = area.getWidth() / 7;
 
     loadButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
     playButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
@@ -71,5 +74,7 @@ void PlayerGUI::resized()
     restartButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
     startButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
     endButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-    muteButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
+    loopButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
+
 }
+
