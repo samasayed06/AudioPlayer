@@ -28,13 +28,10 @@ public:
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
     void releaseResources();
-    void setLooping(bool shouldLoop);
-    juce::AudioTransportSource* getTransportSource() { return &transportSource; }
+
 private:
     juce::AudioFormatManager formatManager;
     juce::AudioTransportSource transportSource;
-    
-
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
 };
 

@@ -24,11 +24,9 @@ void PlayerGUI::setupButtons()
     addAndMakeVisible(restartButton);
     addAndMakeVisible(startButton);
     addAndMakeVisible(endButton);
+    addAndMakeVisible(muteButton);
     addAndMakeVisible(loopButton);
-    loopButton.onClick = [this]()
-        {
-            audioPlayer.setLooping(loopButton.getToggleState());
-        };
+
 
     loadButton.onClick = [this]()
         {
@@ -45,10 +43,6 @@ void PlayerGUI::setupButtons()
                 });
 
             fileChooser = std::move(chooser);
-
-            
-
-            
         };
 
     playButton.onClick = [this]() { audioPlayer.play(); };
@@ -74,7 +68,5 @@ void PlayerGUI::resized()
     restartButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
     startButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
     endButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-    loopButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-
 }
 

@@ -19,7 +19,6 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
-    
 
 private:
     PlayerAudio& audioPlayer;
@@ -30,7 +29,9 @@ private:
     juce::TextButton restartButton{ "Restart" };
     juce::TextButton startButton{ "|<" };
     juce::TextButton endButton{ ">|" };
-    juce::ToggleButton loopButton{ "Loop" };
+    juce::TextButton muteButton{ "Mute" };
+    juce::TextButton loopButton{ "Loop OFF" };
+
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
