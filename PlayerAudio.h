@@ -29,6 +29,12 @@ public:
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
     void releaseResources();
 
+    
+    double getLengthInSeconds() const;
+    double getCurrentPosition() const;
+    void setPosition(double positionInSeconds);
+
+
 private:
     juce::AudioFormatManager formatManager;
     juce::AudioTransportSource transportSource;

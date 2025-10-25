@@ -46,6 +46,20 @@ void PlayerAudio::loadFile(const juce::File& file)
         readerSource.reset(newSource.release());
     }
 }
+double PlayerAudio::getLengthInSeconds() const
+{
+    return transportSource.getLengthInSeconds();
+}
+
+double PlayerAudio::getCurrentPosition() const
+{
+    return transportSource.getCurrentPosition();
+}
+
+void PlayerAudio::setPosition(double positionInSeconds)
+{
+    transportSource.setPosition(positionInSeconds);
+}
 
 void PlayerAudio::play() { transportSource.start(); }
 void PlayerAudio::pause() { transportSource.stop(); }

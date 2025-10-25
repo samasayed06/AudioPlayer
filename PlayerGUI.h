@@ -7,11 +7,14 @@
 
   ==============================================================================
 */
+
 #pragma once
 #include <JuceHeader.h>
 #include "PlayerAudio.h"
 
-class PlayerGUI : public juce::Component
+class PlayerGUI : public juce::Component,
+    public juce::Slider::Listener,
+    public juce::Timer
 {
 public:
     PlayerGUI(PlayerAudio& player);
@@ -20,9 +23,14 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
 
+    
+    void sliderValueChanged(juce::Slider* slider) override;
+    void timerCallback() override;
+
 private:
     PlayerAudio& audioPlayer;
 
+    
     juce::TextButton loadButton{ "Load" };
     juce::TextButton playButton{ ">" };
     juce::TextButton pauseButton{ "||" };
@@ -32,10 +40,10 @@ private:
     juce::TextButton muteButton{ "Mute" };
     juce::TextButton loopButton{ "Loop OFF" };
 
+    
+    juce::Slider positionSlider;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
     void setupButtons();
 };
-
-

@@ -1,13 +1,11 @@
-﻿
-
-
-#pragma once
+﻿#pragma once
 
 #include <JuceHeader.h>
 
 class MainComponent : public juce::AudioAppComponent,
     public juce::Button::Listener,
-    public juce::Slider::Listener
+    public juce::Slider::Listener,
+    public juce::Timer
 {
 public:
     MainComponent();
@@ -25,12 +23,19 @@ public:
     // Listeners
     void buttonClicked(juce::Button* button) override;
     void sliderValueChanged(juce::Slider* slider) override;
+    void sliderDragStarted(juce::Slider* slider) override;
+    void sliderDragEnded(juce::Slider* slider) override;
+
+    // Timer
+    void timerCallback() override;
 
 private:
     // Audio
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
+    juce::Label currentTimeLabel;
+    juce::Label totalTimeLabel;
 
     // Buttons
     juce::TextButton loadButton{ "Load" };
@@ -40,12 +45,15 @@ private:
     juce::TextButton startButton{ "|<" };
     juce::TextButton endButton{ ">|" };
     juce::TextButton muteButton{ "Mute" };
-    juce::TextButton loopButton{ "Loop OFF" }; 
+    juce::TextButton loopButton{ "Loop OFF" };
 
+    // Sliders
     juce::Slider volumeSlider;
+    juce::Slider progressSlider; 
 
     bool isMuted = false;
     bool isLooping = false;
+    bool isDraggingSlider = false;
     float previousGain = 0.5f;
 
     std::unique_ptr<juce::FileChooser> fileChooser;

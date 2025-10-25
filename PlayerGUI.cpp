@@ -14,6 +14,15 @@
 PlayerGUI::PlayerGUI(PlayerAudio& player) : audioPlayer(player)
 {
     setupButtons();
+
+    // إعداد الـ slider الخاص بتقدم الأغنية
+    addAndMakeVisible(positionSlider);
+    positionSlider.setRange(0.0, 1.0, 0.001);
+    positionSlider.addListener(this);
+    positionSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    positionSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
+
+    startTimerHz(10); // التحديث كل 0.1 ثانية
 }
 
 void PlayerGUI::setupButtons()
@@ -26,7 +35,6 @@ void PlayerGUI::setupButtons()
     addAndMakeVisible(endButton);
     addAndMakeVisible(muteButton);
     addAndMakeVisible(loopButton);
-
 
     loadButton.onClick = [this]()
         {
@@ -61,12 +69,37 @@ void PlayerGUI::resized()
 {
     auto area = getLocalBounds().reduced(10);
     auto buttonWidth = area.getWidth() / 7;
+    auto buttonArea = area.removeFromTop(60);
 
-    loadButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-    playButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-    pauseButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-    restartButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-    startButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
-    endButton.setBounds(area.removeFromLeft(buttonWidth).reduced(5));
+    loadButton.setBounds(buttonArea.removeFromLeft(buttonWidth).reduced(5));
+    playButton.setBounds(buttonArea.removeFromLeft(buttonWidth).reduced(5));
+    pauseButton.setBounds(buttonArea.removeFromLeft(buttonWidth).reduced(5));
+    restartButton.setBounds(buttonArea.removeFromLeft(buttonWidth).reduced(5));
+    startButton.setBounds(buttonArea.removeFromLeft(buttonWidth).reduced(5));
+    endButton.setBounds(buttonArea.removeFromLeft(buttonWidth).reduced(5));
+        
+    positionSlider.setBounds(area.removeFromTop(40).reduced(5));
 }
+
+void PlayerGUI::timerCallback()
+{
+    auto length = audioPlayer.getLengthInSeconds();
+    if (length > 0)
+    {
+        double pos = audioPlayer.getCurrentPosition() / length;
+        positionSlider.setValue(pos, juce::dontSendNotification);
+    }
+}
+
+void PlayerGUI::sliderValueChanged(juce::Slider* slider)
+{
+    if (slider == &positionSlider)
+    {
+        double newPos = slider->getValue() * audioPlayer.getLengthInSeconds();
+        audioPlayer.setPosition(newPos);
+    }
+}
+
+
+
 
