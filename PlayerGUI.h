@@ -23,14 +23,13 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
 
-    
     void sliderValueChanged(juce::Slider* slider) override;
     void timerCallback() override;
 
 private:
     PlayerAudio& audioPlayer;
 
-    
+    // Buttons
     juce::TextButton loadButton{ "Load" };
     juce::TextButton playButton{ ">" };
     juce::TextButton pauseButton{ "||" };
@@ -40,9 +39,16 @@ private:
     juce::TextButton muteButton{ "Mute" };
     juce::TextButton loopButton{ "Loop OFF" };
 
-    
-    juce::Slider positionSlider;
+    // A-B Loop Buttons
+    juce::TextButton setAButton{ "Set A" };
+    juce::TextButton setBButton{ "Set B" };
+    juce::TextButton loopABButton{ "A-B Loop OFF" };
 
+    // Labels for A-B info
+    juce::Label loopALabel;
+    juce::Label loopBLabel;
+
+    juce::Slider positionSlider;
     std::unique_ptr<juce::FileChooser> fileChooser;
 
     void setupButtons();

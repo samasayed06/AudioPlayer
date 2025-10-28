@@ -30,14 +30,15 @@ public:
     void timerCallback() override;
 
 private:
-    // Audio
+    // ===== Audio =====
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
+
     juce::Label currentTimeLabel;
     juce::Label totalTimeLabel;
 
-    // Buttons
+    // ===== Buttons =====
     juce::TextButton loadButton{ "Load" };
     juce::TextButton restartButton{ "Restart" };
     juce::TextButton playButton{ ">" };
@@ -47,14 +48,29 @@ private:
     juce::TextButton muteButton{ "Mute" };
     juce::TextButton loopButton{ "Loop OFF" };
 
-    // Sliders
-    juce::Slider volumeSlider;
-    juce::Slider progressSlider; 
+    // === A–B Loop Buttons ===
+    juce::TextButton setAButton{ "Set A" };
+    juce::TextButton setBButton{ "Set B" };
+    juce::TextButton abLoopButton{ "A–B Loop OFF" };
 
+    // === Labels for A/B times ===
+    juce::Label aLabel;
+    juce::Label bLabel;
+
+    // ===== Sliders =====
+    juce::Slider volumeSlider;
+    juce::Slider progressSlider;
+
+    // ===== State =====
     bool isMuted = false;
     bool isLooping = false;
     bool isDraggingSlider = false;
     float previousGain = 0.5f;
+
+    // === A–B Loop state ===
+    bool isABLooping = false;
+    double loopA = 0.0;
+    double loopB = 0.0;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 

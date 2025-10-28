@@ -1,4 +1,4 @@
-/*
+﻿/*
   ==============================================================================
 
     PlayerAudio.cpp
@@ -46,6 +46,7 @@ void PlayerAudio::loadFile(const juce::File& file)
         readerSource.reset(newSource.release());
     }
 }
+
 double PlayerAudio::getLengthInSeconds() const
 {
     return transportSource.getLengthInSeconds();
@@ -61,9 +62,45 @@ void PlayerAudio::setPosition(double positionInSeconds)
     transportSource.setPosition(positionInSeconds);
 }
 
+// ====== التحكم ======
 void PlayerAudio::play() { transportSource.start(); }
 void PlayerAudio::pause() { transportSource.stop(); }
 void PlayerAudio::stop() { transportSource.stop(); transportSource.setPosition(0.0); }
 void PlayerAudio::restart() { transportSource.setPosition(0.0); transportSource.start(); }
 void PlayerAudio::start() { transportSource.setPosition(0.0); }
 void PlayerAudio::end() { transportSource.setPosition(transportSource.getLengthInSeconds()); }
+
+// ====== A-B Looping ======
+void PlayerAudio::setLoopA()
+{
+    loopStart = transportSource.getCurrentPosition();
+    DBG("Loop Start (A) set at: " << loopStart);
+}
+
+void PlayerAudio::setLoopB()
+{
+    loopEnd = transportSource.getCurrentPosition();
+    if (loopEnd < loopStart)
+        std::swap(loopStart, loopEnd);
+
+    DBG("Loop End (B) set at: " << loopEnd);
+    DBG("Loop Range: " << loopStart << " -> " << loopEnd);
+}
+
+void PlayerAudio::toggleABLoop()
+{
+    isLoopingAB = !isLoopingAB;
+    DBG("A-B Looping " << (isLoopingAB ? "Enabled" : "Disabled"));
+}
+
+void PlayerAudio::checkAndLoop()
+{
+    if (isLoopingAB && transportSource.isPlaying())
+    {
+        double pos = transportSource.getCurrentPosition();
+        if (pos >= loopEnd)
+        {
+            transportSource.setPosition(loopStart);
+        }
+    }
+}

@@ -1,51 +1,66 @@
 ﻿#include "MainComponent.h"
 #include <cmath>
 
+// ============================================================
+//  Constructor
+// ============================================================
 MainComponent::MainComponent()
 {
     formatManager.registerBasicFormats();
 
-    
+    // أزرار التحكم
     for (auto* btn : { &loadButton, &restartButton, &playButton, &pauseButton,
-                       &startButton, &endButton, &muteButton, &loopButton })
+                       &startButton, &endButton, &muteButton, &loopButton,
+                       &setAButton, &setBButton, &abLoopButton })
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
     }
 
-    
+    // السلايدرات
     volumeSlider.setRange(0.0, 1.0, 0.01);
     volumeSlider.setValue(previousGain);
     volumeSlider.addListener(this);
     addAndMakeVisible(volumeSlider);
 
-    
     progressSlider.setRange(0.0, 1.0, 0.001);
     progressSlider.setSliderStyle(juce::Slider::LinearHorizontal);
     progressSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
     progressSlider.addListener(this);
     addAndMakeVisible(progressSlider);
 
+    // الليبلز
     addAndMakeVisible(currentTimeLabel);
-    currentTimeLabel.setText("00:00", juce::dontSendNotification);
-    currentTimeLabel.setJustificationType(juce::Justification::centredLeft);
-
     addAndMakeVisible(totalTimeLabel);
+    addAndMakeVisible(aLabel);
+    addAndMakeVisible(bLabel);
+
+    currentTimeLabel.setText("00:00", juce::dontSendNotification);
     totalTimeLabel.setText("00:00", juce::dontSendNotification);
+    aLabel.setText("A: --:--", juce::dontSendNotification);
+    bLabel.setText("B: --:--", juce::dontSendNotification);
+
+    currentTimeLabel.setJustificationType(juce::Justification::centredLeft);
     totalTimeLabel.setJustificationType(juce::Justification::centredRight);
+    aLabel.setJustificationType(juce::Justification::centred);
+    bLabel.setJustificationType(juce::Justification::centred);
 
-    setSize(700, 300);
+    setSize(750, 350);
     setAudioChannels(0, 2);
-
-    startTimerHz(10); 
+    startTimerHz(10);
 }
 
+// ============================================================
+//  Destructor
+// ============================================================
 MainComponent::~MainComponent()
 {
     shutdownAudio();
 }
 
-// ====== Audio ======
+// ============================================================
+//  Audio
+// ============================================================
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
@@ -59,10 +74,12 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
     else
         transportSource.getNextAudioBlock(bufferToFill);
 
-    if (isLooping && transportSource.getCurrentPosition() >= transportSource.getLengthInSeconds())
+    // تحقق من A–B Loop أثناء التشغيل
+    if (isABLooping)
     {
-        transportSource.setPosition(0.0);
-        transportSource.start();
+        double pos = transportSource.getCurrentPosition();
+        if (pos >= loopB)
+            transportSource.setPosition(loopA);
     }
 }
 
@@ -71,7 +88,9 @@ void MainComponent::releaseResources()
     transportSource.releaseResources();
 }
 
-// ====== GUI ======
+// ============================================================
+//  GUI
+// ============================================================
 void MainComponent::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey);
@@ -105,11 +124,22 @@ void MainComponent::resized()
     endButton.setBounds(startX + (w + spacing) * 1, secondRowY, w, h);
     loopButton.setBounds(startX + (w + spacing) * 2, secondRowY, w, h);
 
+    int thirdRowY = secondRowY + h + 10;
+    setAButton.setBounds(startX, thirdRowY, w, h);
+    setBButton.setBounds(startX + (w + spacing) * 1, thirdRowY, w, h);
+    abLoopButton.setBounds(startX + (w + spacing) * 2, thirdRowY, w * 2, h);
+
+    int labelY = thirdRowY + h + 5;
+    aLabel.setBounds(startX, labelY, w * 2, 25);
+    bLabel.setBounds(startX + (w + spacing) * 2, labelY, w * 2, 25);
+
     int muteX = startX + (w + spacing) * 4 + 40;
     muteButton.setBounds(muteX, sliderY, w, h);
 }
 
-// ====== Button Actions ======
+// ============================================================
+//  Button Actions
+// ============================================================
 void MainComponent::buttonClicked(juce::Button* button)
 {
     if (button == &loadButton)
@@ -137,27 +167,11 @@ void MainComponent::buttonClicked(juce::Button* button)
                 }
             });
     }
-    else if (button == &restartButton)
-    {
-        transportSource.setPosition(0.0);
-        transportSource.start();
-    }
-    else if (button == &playButton)
-    {
-        transportSource.start();
-    }
-    else if (button == &pauseButton)
-    {
-        transportSource.stop();
-    }
-    else if (button == &startButton)
-    {
-        transportSource.setPosition(0.0);
-    }
-    else if (button == &endButton)
-    {
-        transportSource.setPosition(transportSource.getLengthInSeconds());
-    }
+    else if (button == &playButton) transportSource.start();
+    else if (button == &pauseButton) transportSource.stop();
+    else if (button == &restartButton) { transportSource.setPosition(0.0); transportSource.start(); }
+    else if (button == &startButton) transportSource.setPosition(0.0);
+    else if (button == &endButton) transportSource.setPosition(transportSource.getLengthInSeconds());
     else if (button == &muteButton)
     {
         if (!isMuted)
@@ -180,17 +194,33 @@ void MainComponent::buttonClicked(juce::Button* button)
     {
         isLooping = !isLooping;
         loopButton.setButtonText(isLooping ? "Loop ON" : "Loop OFF");
-        resized();
+    }
+    else if (button == &setAButton)
+    {
+        loopA = transportSource.getCurrentPosition();
+        aLabel.setText("A: " + juce::String(loopA, 2) + "s", juce::dontSendNotification);
+    }
+    else if (button == &setBButton)
+    {
+        loopB = transportSource.getCurrentPosition();
+        bLabel.setText("B: " + juce::String(loopB, 2) + "s", juce::dontSendNotification);
+        if (loopB < loopA) std::swap(loopA, loopB);
+    }
+    else if (button == &abLoopButton)
+    {
+        isABLooping = !isABLooping;
+        abLoopButton.setButtonText(isABLooping ? "A–B Loop ON" : "A–B Loop OFF");
     }
 }
 
-// ====== Sliders ======
+// ============================================================
+//  Sliders
+// ============================================================
 void MainComponent::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &volumeSlider)
     {
         float newGain = (float)slider->getValue();
-
         if (isMuted)
         {
             previousGain = newGain;
@@ -222,7 +252,9 @@ void MainComponent::sliderDragEnded(juce::Slider* slider)
         isDraggingSlider = false;
 }
 
-// ====== Timer ======
+// ============================================================
+//  Timer
+// ============================================================
 void MainComponent::timerCallback()
 {
     if (readerSource.get() == nullptr)
@@ -237,7 +269,6 @@ void MainComponent::timerCallback()
         progressSlider.setValue(posRatio, juce::dontSendNotification);
     }
 
-    
     auto formatTime = [](double seconds)
         {
             int mins = (int)(seconds / 60);
