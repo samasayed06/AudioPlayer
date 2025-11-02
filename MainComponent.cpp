@@ -16,7 +16,7 @@ MainComponent::MainComponent()
         btn->addListener(this);
         addAndMakeVisible(btn);
     }
-
+    //test
     // السلايدرات
     volumeSlider.setRange(0.0, 1.0, 0.01);
     volumeSlider.setValue(previousGain);
