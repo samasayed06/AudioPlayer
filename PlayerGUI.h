@@ -7,49 +7,67 @@
 
   ==============================================================================
 */
-
 #pragma once
 #include <JuceHeader.h>
-#include "PlayerAudio.h"
+
+class PlayerAudio;
 
 class PlayerGUI : public juce::Component,
+    public juce::Button::Listener,
     public juce::Slider::Listener,
+    public juce::ListBoxModel,
     public juce::Timer
 {
 public:
-    PlayerGUI(PlayerAudio& player);
-    ~PlayerGUI() override = default;
+    PlayerGUI();
+    ~PlayerGUI() override;
 
+    void setAudioBackend(PlayerAudio* backend); // bind backend
     void paint(juce::Graphics&) override;
     void resized() override;
 
-    void sliderValueChanged(juce::Slider* slider) override;
+    // listeners
+    void buttonClicked(juce::Button* b) override;
+    void sliderValueChanged(juce::Slider* s) override;
+    void sliderDragStarted(juce::Slider* s) override;
+    void sliderDragEnded(juce::Slider* s) override;
+
+    // ListBoxModel
+    int getNumRows() override;
+    void paintListBoxItem(int row, juce::Graphics& g, int width, int height, bool rowIsSelected) override;
+    void selectedRowsChanged(int lastRowSelected) override;
+
+    // Timer
     void timerCallback() override;
 
 private:
-    PlayerAudio& audioPlayer;
-
     // Buttons
     juce::TextButton loadButton{ "Load" };
-    juce::TextButton playButton{ ">" };
-    juce::TextButton pauseButton{ "||" };
+    juce::TextButton playlistButton{ "Load Playlist" };
+    juce::TextButton playButton{ "Play >" };
+    juce::TextButton pauseButton{ "Pause ||" };
     juce::TextButton restartButton{ "Restart" };
     juce::TextButton startButton{ "|<" };
     juce::TextButton endButton{ ">|" };
     juce::TextButton muteButton{ "Mute" };
     juce::TextButton loopButton{ "Loop OFF" };
-
-    // A-B Loop Buttons
     juce::TextButton setAButton{ "Set A" };
     juce::TextButton setBButton{ "Set B" };
-    juce::TextButton loopABButton{ "A-B Loop OFF" };
+    juce::TextButton abLoopButton{ "A–B Loop OFF" };
 
-    // Labels for A-B info
-    juce::Label loopALabel;
-    juce::Label loopBLabel;
-
+    // sliders & labels
+    juce::Slider volumeSlider;
     juce::Slider positionSlider;
+    juce::Label currentTime{ "00:00" }, totalTime{ "00:00" }, infoLabel{ "info", "No file loaded" };
+    juce::Label aLabel{ "A", "A: --:--" }, bLabel{ "B", "B: --:--" };
+
+    juce::ListBox playlistBox{ "Playlist", this };
+    juce::Array<juce::File> playlistFiles;
     std::unique_ptr<juce::FileChooser> fileChooser;
 
-    void setupButtons();
+    PlayerAudio* audio = nullptr;
+    bool draggingPosition = false;
+    float lastVolume = 0.8f;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerGUI)
 };

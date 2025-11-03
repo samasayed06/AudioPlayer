@@ -1,4 +1,4 @@
-﻿/*
+/*
   ==============================================================================
 
     PlayerAudio.h
@@ -7,48 +7,69 @@
 
   ==============================================================================
 */
-
 #pragma once
 #include <JuceHeader.h>
 
-class PlayerAudio
+class PlayerAudio : public juce::AudioSource
 {
 public:
     PlayerAudio();
-    ~PlayerAudio();
+    ~PlayerAudio() override;
 
-    // التحكم في الملفات والصوت
-    void loadFile(const juce::File& file);
+    // AudioSource
+    void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
+    void releaseResources() override;
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
+
+    // controls
+    bool loadFile(const juce::File& file); // returns true if loaded
     void play();
     void pause();
-    void restart();
     void stop();
-    void start();
-    void end();
+    void setPosition(double seconds);
+    double getPosition() const;
+    double getLength() const;
+    void setGain(float g);
+    float getGain() const;
 
-    // إعداد وتشغيل الصوت
-    void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
-    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
-    void releaseResources();
+    // mute
+    void toggleMute();
+    bool isMuted() const;
 
-    // معلومات الوقت
-    double getLengthInSeconds() const;
-    double getCurrentPosition() const;
-    void setPosition(double positionInSeconds);
+    // loop
+    void setLooping(bool on);
+    bool isLoopingEnabled() const;
 
-    // --- A-B Looping ---
-    void setLoopA();
-    void setLoopB();
-    void toggleABLoop();
-    void checkAndLoop();
+    // A-B loop
+    void setMarkerA(double sec);
+    void setMarkerB(double sec);
+    void setABLoopEnabled(bool on);
+    bool isABLoopEnabled() const;
+    double markerA() const;
+    double markerB() const;
+
+    // status
+    bool isLoadedAndPlaying() const;
+
+    // metadata
+    juce::String getDisplayInfo() const;
 
 private:
     juce::AudioFormatManager formatManager;
-    juce::AudioTransportSource transportSource;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+    juce::AudioTransportSource transportSource;
 
-    // A-B Loop Variables
-    double loopStart = 0.0;
-    double loopEnd = 0.0;
-    bool isLoopingAB = false;
+    juce::File currentFile;
+
+    bool muted = false;
+    float previousGain = 0.8f;
+    bool looping = false;
+
+    bool abLoop = false;
+    double aMarker = -1.0, bMarker = -1.0;
+
+    juce::String metaTitle, metaArtist;
+    double metaDurationSeconds = 0.0;
+
+    void readMetadata(const juce::File& f);
 };
