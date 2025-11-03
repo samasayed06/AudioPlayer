@@ -1,4 +1,5 @@
-﻿#include "MainComponent.h"
+﻿#pragma once
+#include "MainComponent.h"
 #include "PlayerGUI.h"
 #include "PlayerAudio.h"
 
@@ -19,7 +20,7 @@ MainComponent::MainComponent()
 
     setSize(960, 520);
 
-    setAudioChannels(0, 2); // we will call prepareToPlay below
+    setAudioChannels(0, 2); // stereo output
 }
 
 MainComponent::~MainComponent()
@@ -35,26 +36,38 @@ void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    // Simple design: only audio1 plays if it's playing, otherwise audio2.
-    // (You can change mixing logic if you want both mixed.)
     bufferToFill.clearActiveBufferRegion();
 
+    // temporary buffer for mixing
+    juce::AudioBuffer<float> temp(bufferToFill.buffer->getNumChannels(),
+        bufferToFill.numSamples);
+    juce::AudioSourceChannelInfo tempInfo(&temp, 0, bufferToFill.numSamples);
+
+    // Track 1
     if (audio1 && audio1->isLoadedAndPlaying())
     {
-        audio1->getNextAudioBlock(bufferToFill);
+        temp.clear();
+        audio1->getNextAudioBlock(tempInfo);
+        for (int ch = 0; ch < bufferToFill.buffer->getNumChannels(); ++ch)
+            bufferToFill.buffer->addFrom(ch, bufferToFill.startSample,
+                temp, ch, 0,
+                bufferToFill.numSamples);
     }
-    else if (audio2 && audio2->isLoadedAndPlaying())
+
+    // Track 2
+    if (audio2 && audio2->isLoadedAndPlaying())
     {
-        audio2->getNextAudioBlock(bufferToFill);
+        temp.clear();
+        audio2->getNextAudioBlock(tempInfo);
+        for (int ch = 0; ch < bufferToFill.buffer->getNumChannels(); ++ch)
+            bufferToFill.buffer->addFrom(ch, bufferToFill.startSample,
+                temp, ch, 0,
+                bufferToFill.numSamples);
     }
-}
 
-void MainComponent::releaseResources()
-{
-    if (audio1) audio1->releaseResources();
-    if (audio2) audio2->releaseResources();
+    // reduce overall gain to avoid clipping
+    bufferToFill.buffer->applyGain(0.8f);
 }
-
 void MainComponent::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkslategrey);
@@ -67,3 +80,11 @@ void MainComponent::resized()
     gui1->setBounds(top);
     gui2->setBounds(r);
 }
+void MainComponent::releaseResources()
+{
+    if (audio1)
+        audio1->releaseResources();
+    if (audio2)
+        audio2->releaseResources();
+}
+
