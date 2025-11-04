@@ -15,7 +15,7 @@ static inline bool inRange(int i, int n) noexcept { return i >= 0 && i < n; }
 
 PlayerGUI::PlayerGUI()
 {
-    auto addB = [this](juce::Button& b){ addAndMakeVisible(b); b.addListener(this); };
+    auto addB = [this](juce::Button& b) { addAndMakeVisible(b); b.addListener(this); };
 
     addB(loadButton); addB(playlistButton); addB(playButton); addB(pauseButton);
     addB(restartButton); addB(startButton); addB(endButton); addB(muteButton);
@@ -64,29 +64,29 @@ void PlayerGUI::resized()
     int x = 12, y = 8, w = 100, h = 30, s = 8;
     loadButton.setBounds(x, y, w, h);
     playlistButton.setBounds(x + (w + s), y, w + 30, h);
-    playButton.setBounds(x + 2*(w + s) + 30, y, w, h);
-    pauseButton.setBounds(x + 3*(w + s) + 30, y, w, h);
-    restartButton.setBounds(x + 4*(w + s) + 30, y, w, h);
+    playButton.setBounds(x + 2 * (w + s) + 30, y, w, h);
+    pauseButton.setBounds(x + 3 * (w + s) + 30, y, w, h);
+    restartButton.setBounds(x + 4 * (w + s) + 30, y, w, h);
 
     volumeSlider.setBounds(x, y + h + 10, 360, 22);
     muteButton.setBounds(x + 380, y + h + 6, 90, h);
 
-    positionSlider.setBounds(x + 70, y + 2*(h + 10), 520, 18);
-    currentTime.setBounds(x, y + 2*(h + 10), 60, 18);
-    totalTime.setBounds(x + 600, y + 2*(h + 10), 60, 18);
+    positionSlider.setBounds(x + 70, y + 2 * (h + 10), 520, 18);
+    currentTime.setBounds(x, y + 2 * (h + 10), 60, 18);
+    totalTime.setBounds(x + 600, y + 2 * (h + 10), 60, 18);
 
-    startButton.setBounds(x, y + 3*(h + 10), w, h);
-    endButton.setBounds(x + (w + s), y + 3*(h + 10), w, h);
-    loopButton.setBounds(x + 2*(w + s), y + 3*(h + 10), w + 20, h);
+    startButton.setBounds(x, y + 3 * (h + 10), w, h);
+    endButton.setBounds(x + (w + s), y + 3 * (h + 10), w, h);
+    loopButton.setBounds(x + 2 * (w + s), y + 3 * (h + 10), w + 20, h);
 
-    setAButton.setBounds(x + 3*(w + s) + 20, y + 3*(h + 10), w, h);
-    setBButton.setBounds(x + 4*(w + s) + 20, y + 3*(h + 10), w, h);
-    abLoopButton.setBounds(x, y + 4*(h + 10), w*2, h);
+    setAButton.setBounds(x + 3 * (w + s) + 20, y + 3 * (h + 10), w, h);
+    setBButton.setBounds(x + 4 * (w + s) + 20, y + 3 * (h + 10), w, h);
+    abLoopButton.setBounds(x, y + 4 * (h + 10), w * 2, h);
 
-    playlistBox.setBounds(x, y + 5*(h + 10), getWidth() - 24, 120);
+    playlistBox.setBounds(x, y + 5 * (h + 10), getWidth() - 24, 120);
     infoLabel.setBounds(12, getHeight() - 24, getWidth() - 24, 18);
-    aLabel.setBounds(getWidth() - 220, y + 3*(h + 10), 100, 18);
-    bLabel.setBounds(getWidth() - 110, y + 3*(h + 10), 100, 18);
+    aLabel.setBounds(getWidth() - 220, y + 3 * (h + 10), 100, 18);
+    bLabel.setBounds(getWidth() - 110, y + 3 * (h + 10), 100, 18);
 }
 
 // Button handler
@@ -123,16 +123,58 @@ void PlayerGUI::buttonClicked(juce::Button* b)
                 playlistBox.updateContent();
             });
     }
-    else if (b == &playButton) { audio->play(); }
-    else if (b == &pauseButton) { audio->pause(); }
-    else if (b == &restartButton) { audio->stop(); audio->play(); }
-    else if (b == &startButton) { audio->setPosition(0.0); }
-    else if (b == &endButton) { double len = audio->getLength(); if (len>0.0) audio->setPosition(len - 0.01); }
-    else if (b == &muteButton) { audio->toggleMute(); muteButton.setButtonText(audio->isMuted() ? "Unmute" : "Mute"); }
-    else if (b == &loopButton) { bool v = !audio->isLoopingEnabled(); audio->setLooping(v); loopButton.setButtonText(v ? "Loop ON" : "Loop OFF"); }
-    else if (b == &setAButton) { double p = audio->getPosition(); audio->setMarkerA(p); aLabel.setText("A: " + juce::String(p, 2), juce::dontSendNotification); }
-    else if (b == &setBButton) { double p = audio->getPosition(); audio->setMarkerB(p); bLabel.setText("B: " + juce::String(p, 2), juce::dontSendNotification); }
-    else if (b == &abLoopButton) { bool v = !audio->isABLoopEnabled(); audio->setABLoopEnabled(v); abLoopButton.setButtonText(v ? "A–B Loop ON" : "A–B Loop OFF"); }
+    else if (b == &playButton)
+    {
+        if (onPlayPressed) onPlayPressed(); // notify mix mode controller (if present)
+        if (audio) audio->play();
+    }
+    else if (b == &pauseButton)
+    {
+        if (onPausePressed) onPausePressed();
+        if (audio) audio->pause();
+    }
+    else if (b == &restartButton)
+    {
+        if (onRestartPressed) onRestartPressed();
+        if (audio) { audio->stop(); audio->play(); }
+    }
+    else if (b == &startButton)
+    {
+        if (onStartPressed) onStartPressed();
+        if (audio) audio->setPosition(0.0);
+    }
+    else if (b == &endButton)
+    {
+        if (onEndPressed) onEndPressed();
+        if (audio) { double len = audio->getLength(); if (len > 0.0) audio->setPosition(len - 0.01); }
+    }
+    else if (b == &muteButton)
+    {
+        if (onMuteToggled) onMuteToggled();
+        if (audio) { audio->toggleMute(); muteButton.setButtonText(audio->isMuted() ? "Unmute" : "Mute"); }
+    }
+    else if (b == &loopButton)
+    {
+        if (onLoopToggled) onLoopToggled();
+        if (audio) { bool v = !audio->isLoopingEnabled(); audio->setLooping(v); loopButton.setButtonText(v ? "Loop ON" : "Loop OFF"); }
+    }
+    else if (b == &setAButton)
+    {
+        double p = audio ? audio->getPosition() : 0.0;
+        if (audio) audio->setMarkerA(p);
+        aLabel.setText("A: " + juce::String(p, 2), juce::dontSendNotification);
+    }
+    else if (b == &setBButton)
+    {
+        double p = audio ? audio->getPosition() : 0.0;
+        if (audio) audio->setMarkerB(p);
+        bLabel.setText("B: " + juce::String(p, 2), juce::dontSendNotification);
+    }
+    else if (b == &abLoopButton)
+    {
+        if (onABLoopToggled) onABLoopToggled();
+        if (audio) { bool v = !audio->isABLoopEnabled(); audio->setABLoopEnabled(v); abLoopButton.setButtonText(v ? "A–B Loop ON" : "A–B Loop OFF"); }
+    }
 }
 
 // Slider handler
@@ -142,6 +184,7 @@ void PlayerGUI::sliderValueChanged(juce::Slider* s)
     if (s == &volumeSlider)
     {
         lastVolume = (float)volumeSlider.getValue();
+        if (onVolumeChanged) onVolumeChanged(lastVolume);
         audio->setGain(lastVolume);
     }
     else if (s == &positionSlider && draggingPosition)
@@ -150,15 +193,17 @@ void PlayerGUI::sliderValueChanged(juce::Slider* s)
         if (len > 0.0)
         {
             double pos = positionSlider.getValue() * len;
+            // notify mix controller of position request (so it can set both)
+            if (onSetPositionRequest) onSetPositionRequest(pos);
+            // also set own audio position (original behavior)
             audio->setPosition(pos);
         }
     }
 }
 
 void PlayerGUI::sliderDragStarted(juce::Slider* s) { if (s == &positionSlider) draggingPosition = true; }
-void PlayerGUI::sliderDragEnded(juce::Slider* s)   { if (s == &positionSlider) draggingPosition = false; }
+void PlayerGUI::sliderDragEnded(juce::Slider* s) { if (s == &positionSlider) draggingPosition = false; }
 
-// Playlist model
 int PlayerGUI::getNumRows() { return playlistFiles.size(); }
 
 void PlayerGUI::paintListBoxItem(int row, juce::Graphics& g, int width, int height, bool rowIsSelected)
@@ -180,7 +225,6 @@ void PlayerGUI::selectedRowsChanged(int lastRowSelected)
     }
 }
 
-// Timer
 void PlayerGUI::timerCallback()
 {
     if (!audio) return;
@@ -192,10 +236,10 @@ void PlayerGUI::timerCallback()
         positionSlider.setValue(pos / len, juce::dontSendNotification);
 
     auto fmt = [](double s)
-    {
-        int m = int(s / 60), sec = int(std::fmod(s, 60.0));
-        return juce::String::formatted("%02d:%02d", m, sec);
-    };
+        {
+            int m = int(s / 60), sec = int(std::fmod(s, 60.0));
+            return juce::String::formatted("%02d:%02d", m, sec);
+        };
 
     currentTime.setText(fmt(pos), juce::dontSendNotification);
     totalTime.setText(len > 0.0 ? fmt(len) : "00:00", juce::dontSendNotification);

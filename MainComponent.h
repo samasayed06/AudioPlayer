@@ -21,6 +21,13 @@ private:
     std::unique_ptr<PlayerAudio> audio1, audio2;
     std::unique_ptr<PlayerGUI> gui1, gui2;
 
+    // Mix mode UI
+    juce::TextButton mixModeButton{ "Mix Mode OFF" };
+    bool mixModeEnabled = false;
+
+    // helpers
+    void enableMixMode();
+    void disableMixMode();
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };
-

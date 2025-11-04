@@ -1,13 +1,4 @@
-﻿/*
-  ==============================================================================
-
-    PlayerGUI.h
-    Created: 21 Oct 2025 4:34:07pm
-    Author:  USER
-
-  ==============================================================================
-*/
-#pragma once
+﻿#pragma once
 #include <JuceHeader.h>
 
 class PlayerAudio;
@@ -39,6 +30,18 @@ public:
 
     // Timer
     void timerCallback() override;
+
+    // --- Callbacks (optional) for Mix Mode; when set, they will be called in addition to local behavior
+    std::function<void()> onPlayPressed;
+    std::function<void()> onPausePressed;
+    std::function<void()> onRestartPressed;
+    std::function<void()> onStartPressed;
+    std::function<void()> onEndPressed;
+    std::function<void(float)> onVolumeChanged;
+    std::function<void()> onMuteToggled;
+    std::function<void()> onLoopToggled;
+    std::function<void()> onABLoopToggled;
+    std::function<void(double)> onSetPositionRequest; // seconds
 
 private:
     // Buttons
