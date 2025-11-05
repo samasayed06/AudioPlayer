@@ -26,12 +26,14 @@ PlayerAudio::~PlayerAudio()
 
 void PlayerAudio::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
-    transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    resampleSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
+
 }
 
 void PlayerAudio::releaseResources()
 {
-    transportSource.releaseResources();
+    resampleSource.releaseResources();
+
 }
 
 void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
@@ -42,7 +44,8 @@ void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferTo
         return;
     }
 
-    transportSource.getNextAudioBlock(bufferToFill);
+    resampleSource.getNextAudioBlock(bufferToFill);
+
 
     // A-B loop (audio thread)
     if (abLoop && aMarker >= 0.0 && bMarker > aMarker)
@@ -100,6 +103,17 @@ void PlayerAudio::setGain(float g)
     if (!muted) transportSource.setGain(previousGain);
 }
 float PlayerAudio::getGain() const { return previousGain; }
+void PlayerAudio::setSpeed(double ratio)
+{
+    // Clamp between 0.5x and 2.0x
+    ratio = juce::jlimit(0.5, 2.0, ratio);
+    resampleSource.setResamplingRatio(ratio);
+}
+
+double PlayerAudio::getSpeed() const
+{
+    return resampleSource.getResamplingRatio();
+}
 
 void PlayerAudio::toggleMute()
 {

@@ -1,4 +1,4 @@
-﻿#include "MainComponent.h"
+#include "MainComponent.h"
 #include "PlayerGUI.h"
 #include "PlayerAudio.h"
 
@@ -83,6 +83,11 @@ void MainComponent::enableMixMode()
         if (audio1 && audio2) { audio1->setGain(v); audio2->setGain(v); }
         };
     gui2->onVolumeChanged = gui1->onVolumeChanged;
+    // Speed - set both playback rates
+    gui1->onSpeedChanged = [this](double speed) {
+        if (audio1 && audio2) { audio1->setSpeed(speed); audio2->setSpeed(speed); }
+        };
+    gui2->onSpeedChanged = gui1->onSpeedChanged;
 
     // Mute toggle
     gui1->onMuteToggled = [this]() {
@@ -139,6 +144,10 @@ void MainComponent::disableMixMode()
 
     gui1->onVolumeChanged = nullptr;
     gui2->onVolumeChanged = nullptr;
+
+    gui1->onSpeedChanged = nullptr;
+    gui2->onSpeedChanged = nullptr;
+
 
     gui1->onMuteToggled = nullptr;
     gui2->onMuteToggled = nullptr;

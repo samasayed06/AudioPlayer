@@ -1,4 +1,4 @@
-﻿/*
+/*
   ==============================================================================
 
     PlayerGUI.cpp
@@ -41,6 +41,16 @@ PlayerGUI::PlayerGUI()
 
     setSize(920, 240);
     startTimerHz(20);
+    speedSlider.setRange(0.5, 2.0, 0.01);
+    speedSlider.setValue(1.0);
+    speedSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    speedSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 18);
+    speedSlider.addListener(this);
+    addAndMakeVisible(speedSlider);
+    addAndMakeVisible(jumpBackButton); jumpBackButton.addListener(this);
+    addAndMakeVisible(jumpForwardButton); jumpForwardButton.addListener(this);
+
+
 }
 
 PlayerGUI::~PlayerGUI()
@@ -57,6 +67,33 @@ void PlayerGUI::setAudioBackend(PlayerAudio* backend)
 void PlayerGUI::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey);
+
+    // Draw waveform
+    if (!waveformPath.isEmpty())
+    {
+        juce::Rectangle<int> area(12, 120 + waveformYOffset, getWidth() - 24, 60); // waveform area moved
+        g.strokePath(waveformPath, juce::PathStrokeType(1.0f));
+
+    }
+
+    if (audio)
+    {
+        double len = audio->getLength();
+        double pos = audio->getPosition();
+        if (len > 0.0)
+        {
+            int waveformTop = 120;      // same top as waveform
+            int waveformHeight = 60;    // same height as waveform
+            float x = (float)(pos / len * (getWidth() - 24)); // same width as waveform
+            g.setColour(juce::Colours::red);
+
+            float yOffset = 30;        // move playhead up by 10 pixels
+
+            g.drawLine(x + 12, waveformTop + yOffset, x + 12, waveformTop + waveformHeight + yOffset, 2.0f);
+        }
+    }
+
+
 }
 
 void PlayerGUI::resized()
@@ -69,7 +106,12 @@ void PlayerGUI::resized()
     restartButton.setBounds(x + 4 * (w + s) + 30, y, w, h);
 
     volumeSlider.setBounds(x, y + h + 10, 360, 22);
-    muteButton.setBounds(x + 380, y + h + 6, 90, h);
+    speedSlider.setBounds(x + 480, y + h + 10, 260, h);
+    positionSlider.setBounds(x + 70, y + 2 * (h + 10), 520, 18);
+    int waveformY = y + 2 * (h + 10) + 20;
+    // waveform is painted manually starting at waveformY
+
+    muteButton.setBounds(x + 560, y + 3 * (h + 10), 90, h);
 
     positionSlider.setBounds(x + 70, y + 2 * (h + 10), 520, 18);
     currentTime.setBounds(x, y + 2 * (h + 10), 60, 18);
@@ -81,12 +123,16 @@ void PlayerGUI::resized()
 
     setAButton.setBounds(x + 3 * (w + s) + 20, y + 3 * (h + 10), w, h);
     setBButton.setBounds(x + 4 * (w + s) + 20, y + 3 * (h + 10), w, h);
-    abLoopButton.setBounds(x, y + 4 * (h + 10), w * 2, h);
+    abLoopButton.setBounds(x+570, y , w , h);
 
     playlistBox.setBounds(x, y + 5 * (h + 10), getWidth() - 24, 120);
     infoLabel.setBounds(12, getHeight() - 24, getWidth() - 24, 18);
     aLabel.setBounds(getWidth() - 220, y + 3 * (h + 10), 100, 18);
     bLabel.setBounds(getWidth() - 110, y + 3 * (h + 10), 100, 18);
+    int y2 = y + 4 * (h + 10); // just below your main buttons
+    jumpBackButton.setBounds(x + 680, y, w, h);
+    jumpForwardButton.setBounds(x + 790, y, w, h);
+
 }
 
 // Button handler
@@ -106,6 +152,34 @@ void PlayerGUI::buttonClicked(juce::Button* b)
                     if (audio->loadFile(f))
                     {
                         infoLabel.setText(audio->getDisplayInfo(), juce::dontSendNotification);
+
+                        // --- Step 2: Generate waveform for display ---
+                        juce::AudioFormatReader* reader = audio->getAudioFormatReader();
+                        if (reader)
+                        {
+                            // Resize buffer and read samples
+                            waveformBuffer.setSize((int)reader->numChannels, (int)reader->lengthInSamples);
+                            reader->read(&waveformBuffer, 0, (int)reader->lengthInSamples, 0, true, true);
+
+                            // Build waveform path
+                            waveformPath.clear();
+                            int w = getWidth() - 24;      // width to fit GUI
+                            int h = 60;                    // height of waveform display
+                            waveformPath.startNewSubPath(0, h / 2);
+
+                            int step = waveformBuffer.getNumSamples() / w;
+                            if (step < 1) step = 1;
+
+                            for (int i = 0; i < waveformBuffer.getNumSamples(); i += step)
+                            {
+                                float sample = waveformBuffer.getSample(0, i); // channel 0
+                                float y = h / 2 - sample * h / 2 + waveformYOffset;
+
+                                waveformPath.lineTo((float)(i / (float)waveformBuffer.getNumSamples() * w), y);
+                            }
+                        }
+
+                        audio->play();
                     }
                 }
             });
@@ -128,6 +202,26 @@ void PlayerGUI::buttonClicked(juce::Button* b)
         if (onPlayPressed) onPlayPressed(); // notify mix mode controller (if present)
         if (audio) audio->play();
     }
+    else if (b == &jumpBackButton)
+    {
+        if (audio)
+        {
+            double newPos = juce::jmax(0.0, audio->getPosition() - 10.0);
+            audio->setPosition(newPos);
+            if (onSetPositionRequest) onSetPositionRequest(newPos); // for mix mode
+        }
+    }
+    else if (b == &jumpForwardButton)
+    {
+        if (audio)
+        {
+            double len = audio->getLength();
+            double newPos = juce::jmin(len, audio->getPosition() + 10.0);
+            audio->setPosition(newPos);
+            if (onSetPositionRequest) onSetPositionRequest(newPos); // for mix mode
+        }
+    }
+
     else if (b == &pauseButton)
     {
         if (onPausePressed) onPausePressed();
@@ -187,6 +281,13 @@ void PlayerGUI::sliderValueChanged(juce::Slider* s)
         if (onVolumeChanged) onVolumeChanged(lastVolume);
         audio->setGain(lastVolume);
     }
+    else if (s == &speedSlider)
+    {
+        double speed = speedSlider.getValue();
+        if (onSpeedChanged) onSpeedChanged(speed);
+        if (audio) audio->setSpeed(speed);
+    }
+
     else if (s == &positionSlider && draggingPosition)
     {
         double len = audio->getLength();
@@ -246,4 +347,6 @@ void PlayerGUI::timerCallback()
 
     // update info label (metadata or filename)
     infoLabel.setText(audio->getDisplayInfo(), juce::dontSendNotification);
+    repaint(); // will redraw waveform with updated playhead
+
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <JuceHeader.h>
 
 class PlayerAudio;
@@ -38,6 +38,8 @@ public:
     std::function<void()> onStartPressed;
     std::function<void()> onEndPressed;
     std::function<void(float)> onVolumeChanged;
+    std::function<void(double)> onSpeedChanged;
+
     std::function<void()> onMuteToggled;
     std::function<void()> onLoopToggled;
     std::function<void()> onABLoopToggled;
@@ -57,12 +59,23 @@ private:
     juce::TextButton setAButton{ "Set A" };
     juce::TextButton setBButton{ "Set B" };
     juce::TextButton abLoopButton{ "A–B Loop OFF" };
+    juce::TextButton jumpBackButton{ "-10s" };
+    juce::TextButton jumpForwardButton{ "+10s" };
+
 
     // sliders & labels
     juce::Slider volumeSlider;
     juce::Slider positionSlider;
     juce::Label currentTime{ "00:00" }, totalTime{ "00:00" }, infoLabel{ "info", "No file loaded" };
     juce::Label aLabel{ "A", "A: --:--" }, bLabel{ "B", "B: --:--" };
+    juce::Slider speedSlider;
+    // Waveform display
+    juce::AudioBuffer<float> waveformBuffer;
+    juce::Path waveformPath;
+    int waveformYOffset = 150;  // positive = move down, negative = move up
+
+
+
 
     juce::ListBox playlistBox{ "Playlist", this };
     juce::Array<juce::File> playlistFiles;

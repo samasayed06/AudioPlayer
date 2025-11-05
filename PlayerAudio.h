@@ -31,6 +31,10 @@ public:
     double getLength() const;
     void setGain(float g);
     float getGain() const;
+    
+    // speed control
+    void setSpeed(double ratio);
+    double getSpeed() const;
 
     // mute
     void toggleMute();
@@ -53,11 +57,19 @@ public:
 
     // metadata
     juce::String getDisplayInfo() const;
+    // Getter for the underlying AudioFormatReader
+    juce::AudioFormatReader* getAudioFormatReader() const
+    {
+        return readerSource ? readerSource->getAudioFormatReader() : nullptr;
+    }
+
 
 private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
+    juce::ResamplingAudioSource resampleSource{ &transportSource, false, 2 };
+
 
     juce::File currentFile;
 
