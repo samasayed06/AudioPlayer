@@ -1,4 +1,4 @@
-/*
+﻿/*
   ==============================================================================
 
     PlayerGUI.cpp
@@ -15,11 +15,24 @@ static inline bool inRange(int i, int n) noexcept { return i >= 0 && i < n; }
 
 PlayerGUI::PlayerGUI()
 {
-    auto addB = [this](juce::Button& b) { addAndMakeVisible(b); b.addListener(this); };
+    auto addB = [this](juce::Button& b)
+        {
+            addAndMakeVisible(b);
+            b.addListener(this);
+
+            b.setColour(juce::TextButton::buttonColourId, juce::Colour(0xFFD66A88));  
+            b.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xFFB04866)); 
+            b.setColour(juce::TextButton::textColourOffId, juce::Colours::darkgrey);     
+            b.setColour(juce::TextButton::textColourOnId, juce::Colours::darkgrey);
+
+        };
+
 
     addB(loadButton); addB(playlistButton); addB(playButton); addB(pauseButton);
     addB(restartButton); addB(startButton); addB(endButton); addB(muteButton);
-    addB(loopButton); addB(setAButton); addB(setBButton); addB(abLoopButton);
+    addB(loopButton); addB(setAButton); addB(setBButton); addB(abLoopButton); addB(jumpBackButton);
+    addB(jumpForwardButton);
+
 
     volumeSlider.setRange(0.0, 1.0, 0.01);
     volumeSlider.setValue(lastVolume);
@@ -47,8 +60,7 @@ PlayerGUI::PlayerGUI()
     speedSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 18);
     speedSlider.addListener(this);
     addAndMakeVisible(speedSlider);
-    addAndMakeVisible(jumpBackButton); jumpBackButton.addListener(this);
-    addAndMakeVisible(jumpForwardButton); jumpForwardButton.addListener(this);
+   
 
 
 }
@@ -66,7 +78,7 @@ void PlayerGUI::setAudioBackend(PlayerAudio* backend)
 
 void PlayerGUI::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::darkgrey);
+    g.fillAll(juce::Colours::grey);
 
     // Draw waveform
     if (!waveformPath.isEmpty())

@@ -1,4 +1,4 @@
-#include "MainComponent.h"
+﻿#include "MainComponent.h"
 #include "PlayerGUI.h"
 #include "PlayerAudio.h"
 
@@ -204,7 +204,7 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 }
 void MainComponent::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::darkslategrey);
+    g.fillAll(juce::Colours::grey);
 }
 
 void MainComponent::resized()
